@@ -1,6 +1,7 @@
 package hu.webuni.vargyasb.logistics;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -15,6 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 import hu.webuni.vargyasb.logistics.dto.DelayDto;
+import hu.webuni.vargyasb.logistics.dto.LoginDto;
 import hu.webuni.vargyasb.logistics.model.Address;
 import hu.webuni.vargyasb.logistics.model.Milestone;
 import hu.webuni.vargyasb.logistics.model.Section;
@@ -49,6 +51,9 @@ public class TransportPlanIT {
 	@Autowired
 	TransportPlanService transportPlanService;
 	
+	String userJwt;
+	String transportuserJwt;
+	
 	@BeforeEach
 	public void init() {
 		sectionRepository.deleteAll();
@@ -57,6 +62,12 @@ public class TransportPlanIT {
 		addressRepository.deleteAll();
 		
 		createTestData();
+		
+		LoginDto user = createLoginDto("user", "pass");
+		userJwt = login(user);
+
+		LoginDto transportUser = createLoginDto("transportuser", "pass");
+		transportuserJwt = login(transportUser);
 	}
 	
 	@Test
@@ -74,7 +85,7 @@ public class TransportPlanIT {
 		double estimatedIncome = transportPlan.getEstimatedIncome();
 		
 		//0%
-		registerDelay(transportPlanId, delayDto);
+		registerDelay(transportPlanId, delayDto, transportuserJwt);
 
 		transportPlan = transportPlanRepository.findById(transportPlanId).get();
 		double estimatedIncomeAfterPenalty0 = transportPlan.getEstimatedIncome();
@@ -83,7 +94,7 @@ public class TransportPlanIT {
 		
 		// 1%
 		delayDto.setDelayInMinutes(30);
-		registerDelay(transportPlanId, delayDto);
+		registerDelay(transportPlanId, delayDto, transportuserJwt);
 		
 		transportPlan = transportPlanRepository.findById(transportPlanId).get();
 		double estimatedIncomeAfterPenalty1 = transportPlan.getEstimatedIncome();
@@ -92,7 +103,7 @@ public class TransportPlanIT {
 		
 		//2.5%
 		delayDto.setDelayInMinutes(60);
-		registerDelay(transportPlanId, delayDto);
+		registerDelay(transportPlanId, delayDto, transportuserJwt);
 		
 		transportPlan = transportPlanRepository.findById(transportPlanId).get();
 		double estimatedIncomeAfterPenalty25 = transportPlan.getEstimatedIncome();
@@ -101,7 +112,7 @@ public class TransportPlanIT {
 		
 		//4%
 		delayDto.setDelayInMinutes(120);
-		registerDelay(transportPlanId, delayDto);
+		registerDelay(transportPlanId, delayDto, transportuserJwt);
 		
 		transportPlan = transportPlanRepository.findById(transportPlanId).get();
 		double estimatedIncomeAfterPenalty4 = transportPlan.getEstimatedIncome();
@@ -129,7 +140,7 @@ public class TransportPlanIT {
 		delayDto.setMilestoneId(section1ToMilestoneId);
 		delayDto.setDelayInMinutes(delayInMinutes);
 		
-		registerDelay(transportPlanId, delayDto);
+		registerDelay(transportPlanId, delayDto, transportuserJwt);
 		section1ToMilestone = milestoneRepository.findById(section1ToMilestoneId).get();
 		section2FromMilestone = milestoneRepository.findById(section2FromMilestoneId).get();
 		
@@ -159,7 +170,7 @@ public class TransportPlanIT {
 		delayDto.setMilestoneId(fromMilestoneId);
 		delayDto.setDelayInMinutes(delayInMinutes);
 		
-		registerDelay(transportPlanId, delayDto);
+		registerDelay(transportPlanId, delayDto, transportuserJwt);
 		fromMilestone = milestoneRepository.findById(fromMilestoneId).get();
 		toMilestone = milestoneRepository.findById(toMilestoneId).get();
 		
@@ -184,13 +195,28 @@ public class TransportPlanIT {
 		
 		LocalDateTime plannedTimeBefore = milestone.getPlannedTime();
 		
-		registerDelay(transportPlanId, delayDto);
+		registerDelay(transportPlanId, delayDto, transportuserJwt);
 		
 		milestone = milestoneRepository.findById(milestoneId).get();
 		LocalDateTime plannedTimeAfter = milestone.getPlannedTime();
 		
 		assertThat(plannedTimeBefore).isNotEqualTo(plannedTimeAfter);
 		assertThat(plannedTimeAfter).isEqualTo(plannedTimeBefore.plusMinutes(delayInMinutes));
+	}
+	
+	@Test
+	void testThatNonTransportUserIsRestricted() throws Exception {
+		TransportPlan transportPlan = transportPlanRepository.findAll().get(0);
+		long transportPlanId = transportPlan.getId();
+		Milestone milestone = milestoneRepository.findAll().get(0);
+		long milestoneId = milestone.getId();
+		int delayInMinutes = 120;
+		
+		DelayDto delayDto = new DelayDto();
+		delayDto.setMilestoneId(milestoneId);
+		delayDto.setDelayInMinutes(delayInMinutes);
+		
+		registerDelayWithRestrictedUser(transportPlanId, delayDto, userJwt);
 	}
 	
 	@Test
@@ -206,7 +232,7 @@ public class TransportPlanIT {
 		delayDto.setMilestoneId(testMilestoneId);
 		delayDto.setDelayInMinutes(120);
 		
-		registerDelayWithMilestoneNotInAnySection(transportPlanId, delayDto);
+		registerDelayWithMilestoneNotInAnySection(transportPlanId, delayDto, transportuserJwt);
 	}
 	
 	@Test
@@ -214,7 +240,7 @@ public class TransportPlanIT {
 		long transportPlanId = 9999;
 		DelayDto delayDto = new DelayDto();
 		
-		registerDelayWithNonExistentTransportPlanIdOrMilestone(transportPlanId, delayDto);
+		registerDelayWithNonExistentTransportPlanIdOrMilestone(transportPlanId, delayDto, transportuserJwt);
 	}
 	
 	@Test
@@ -225,7 +251,7 @@ public class TransportPlanIT {
 		delayDto.setMilestoneId(9999L);
 		delayDto.setDelayInMinutes(120);
 		
-		registerDelayWithNonExistentTransportPlanIdOrMilestone(transportPlanId, delayDto);
+		registerDelayWithNonExistentTransportPlanIdOrMilestone(transportPlanId, delayDto, transportuserJwt);
 	}
 	
 	public void createTestData() {
@@ -287,30 +313,62 @@ public class TransportPlanIT {
 		return sectionRepository.save(section);
 	}
 	
-	private void registerDelay(long transportPlanId, DelayDto delayDto) {
+	private LoginDto createLoginDto(String username, String password) {
+		LoginDto loginDto = new LoginDto();
+		loginDto.setUsername(username);
+		loginDto.setPassword(password);
+		return loginDto;
+	}
+	
+	private String login(LoginDto loginDto) {
+		return webTestClient
+				.post()
+				.uri("/api/login")
+				.bodyValue(loginDto)
+				.exchange()
+				.expectBody(String.class)
+				.returnResult()
+				.getResponseBody();
+	}
+	
+	private void registerDelay(long transportPlanId, DelayDto delayDto, String jwt) {
 		webTestClient
 			.post()
 			.uri(BASE_URI + "/" + transportPlanId + "/delay")
+			.headers(headers -> headers.setBearerAuth(jwt))
 			.bodyValue(delayDto)
 			.exchange()
 			.expectStatus()
 			.isOk();
 	}
 	
-	private void registerDelayWithNonExistentTransportPlanIdOrMilestone(long transportPlanId, DelayDto delayDto) {
+	private void registerDelayWithRestrictedUser(long transportPlanId, DelayDto delayDto, String jwt) {
 		webTestClient
 			.post()
 			.uri(BASE_URI + "/" + transportPlanId + "/delay")
+			.headers(headers -> headers.setBearerAuth(jwt))
+			.bodyValue(delayDto)
+			.exchange()
+			.expectStatus()
+			.isForbidden();
+	}
+	
+	private void registerDelayWithNonExistentTransportPlanIdOrMilestone(long transportPlanId, DelayDto delayDto, String jwt) {
+		webTestClient
+			.post()
+			.uri(BASE_URI + "/" + transportPlanId + "/delay")
+			.headers(headers -> headers.setBearerAuth(jwt))
 			.bodyValue(delayDto)
 			.exchange()
 			.expectStatus()
 			.isNotFound();
 	}
 	
-	private void registerDelayWithMilestoneNotInAnySection(long transportPlanId, DelayDto delayDto) {
+	private void registerDelayWithMilestoneNotInAnySection(long transportPlanId, DelayDto delayDto, String jwt) {
 		webTestClient
 			.post()
 			.uri(BASE_URI + "/" + transportPlanId + "/delay")
+			.headers(headers -> headers.setBearerAuth(jwt))
 			.bodyValue(delayDto)
 			.exchange()
 			.expectStatus()
