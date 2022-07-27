@@ -1,0 +1,20 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/logistics
+    username: postgres
+    password: 11235813
+  
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: create
+    open-in-view: false
+
+logistics:
+  incomePenalty:
+    limitHigh: 120
+    limitMid: 60
+    limitLow: 30
+    percentHigh: 4
+    percentMid: 2.5
+    percentLow: 1
