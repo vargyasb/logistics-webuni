@@ -68,10 +68,8 @@ public class AddressController {
 	
 	@PutMapping("/{id}")
 	public AddressDto modifyAddress(@PathVariable long id, @RequestBody @Valid AddressDto addressDto) {
-		if (addressDto.getId() != null) {
-			if (addressDto.getId() != id)
+		if (addressDto.getId() != null && addressDto.getId() != id) 
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-		}
 		
 		Address address;
 		try {
@@ -81,13 +79,6 @@ public class AddressController {
 		}
 		return addressMapper.addressToAddressDto(address);
 	}
-//	
-//	@PostMapping("/search")
-//	public List<AddressDto> findAddressesByExample(@RequestBody AddressDto example, 
-//			@PageableDefault(sort = {"id"}, page = 0, value = Integer.MAX_VALUE) Pageable pageable) {
-//		Page<Address> page = addressService.findAddressesByExample(example, pageable);
-//		page.getTotalElements();
-//		return addressMapper.addressesToDtos(page.getContent());
 	
 	@PostMapping("/search")
 	public ResponseEntity<Object> findAddressesByExample(@RequestBody AddressDto example, 

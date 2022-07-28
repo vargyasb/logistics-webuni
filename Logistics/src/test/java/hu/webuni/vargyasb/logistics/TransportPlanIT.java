@@ -31,6 +31,8 @@ import hu.webuni.vargyasb.logistics.service.TransportPlanService;
 @AutoConfigureTestDatabase
 public class TransportPlanIT {
 
+	private static final int DEF_DELAY_IN_MINUTES = 120;
+
 	private static final String BASE_URI = "api/transportPlans";
 	
 	@Autowired
@@ -76,11 +78,8 @@ public class TransportPlanIT {
 		long transportPlanId = transportPlan.getId();
 		Milestone milestone = milestoneRepository.findAll().get(0);
 		long milestoneId = milestone.getId();
-		int delayInMinutes = 29;
 		
-		DelayDto delayDto = new DelayDto();
-		delayDto.setMilestoneId(milestoneId);
-		delayDto.setDelayInMinutes(delayInMinutes);
+		DelayDto delayDto = createDelayDto(milestoneId, 29);
 		
 		double estimatedIncome = transportPlan.getEstimatedIncome();
 		
@@ -135,20 +134,17 @@ public class TransportPlanIT {
 		long section2FromMilestoneId = section2FromMilestone.getId();
 		LocalDateTime section2FromMilestonePlannedTimeBefore = section2FromMilestone.getPlannedTime();
 		
-		int delayInMinutes = 120;
-		DelayDto delayDto = new DelayDto();
-		delayDto.setMilestoneId(section1ToMilestoneId);
-		delayDto.setDelayInMinutes(delayInMinutes);
+		DelayDto delayDto = createDelayDto(section1ToMilestoneId, DEF_DELAY_IN_MINUTES);
 		
 		registerDelay(transportPlanId, delayDto, transportuserJwt);
 		section1ToMilestone = milestoneRepository.findById(section1ToMilestoneId).get();
 		section2FromMilestone = milestoneRepository.findById(section2FromMilestoneId).get();
 		
 		assertThat(section1ToMilestonePlannedTimeBefore).isNotEqualTo(section1ToMilestone.getPlannedTime());
-		assertThat(section1ToMilestone.getPlannedTime()).isEqualTo(section1ToMilestonePlannedTimeBefore.plusMinutes(delayInMinutes));
+		assertThat(section1ToMilestone.getPlannedTime()).isEqualTo(section1ToMilestonePlannedTimeBefore.plusMinutes(DEF_DELAY_IN_MINUTES));
 		
 		assertThat(section2FromMilestonePlannedTimeBefore).isNotEqualTo(section2FromMilestone.getPlannedTime());
-		assertThat(section2FromMilestone.getPlannedTime()).isEqualTo(section2FromMilestonePlannedTimeBefore.plusMinutes(delayInMinutes));
+		assertThat(section2FromMilestone.getPlannedTime()).isEqualTo(section2FromMilestonePlannedTimeBefore.plusMinutes(DEF_DELAY_IN_MINUTES));
 	}
 	
 	@Test
@@ -165,20 +161,17 @@ public class TransportPlanIT {
 		long toMilestoneId = toMilestone.getId();
 		LocalDateTime toPlannedTimeBefore = toMilestone.getPlannedTime();
 		
-		int delayInMinutes = 120;
-		DelayDto delayDto = new DelayDto();
-		delayDto.setMilestoneId(fromMilestoneId);
-		delayDto.setDelayInMinutes(delayInMinutes);
+		DelayDto delayDto = createDelayDto(fromMilestoneId, DEF_DELAY_IN_MINUTES);
 		
 		registerDelay(transportPlanId, delayDto, transportuserJwt);
 		fromMilestone = milestoneRepository.findById(fromMilestoneId).get();
 		toMilestone = milestoneRepository.findById(toMilestoneId).get();
 		
 		assertThat(fromPlannedTimeBefore).isNotEqualTo(fromMilestone.getPlannedTime());
-		assertThat(fromMilestone.getPlannedTime()).isEqualTo(fromPlannedTimeBefore.plusMinutes(delayInMinutes));
+		assertThat(fromMilestone.getPlannedTime()).isEqualTo(fromPlannedTimeBefore.plusMinutes(DEF_DELAY_IN_MINUTES));
 		
 		assertThat(toPlannedTimeBefore).isNotEqualTo(toMilestone.getPlannedTime());
-		assertThat(toMilestone.getPlannedTime()).isEqualTo(toPlannedTimeBefore.plusMinutes(delayInMinutes));
+		assertThat(toMilestone.getPlannedTime()).isEqualTo(toPlannedTimeBefore.plusMinutes(DEF_DELAY_IN_MINUTES));
 	}
 	
 	@Test
@@ -187,11 +180,8 @@ public class TransportPlanIT {
 		long transportPlanId = transportPlan.getId();
 		Milestone milestone = milestoneRepository.findAll().get(0);
 		long milestoneId = milestone.getId();
-		int delayInMinutes = 120;
 		
-		DelayDto delayDto = new DelayDto();
-		delayDto.setMilestoneId(milestoneId);
-		delayDto.setDelayInMinutes(delayInMinutes);
+		DelayDto delayDto = createDelayDto(milestoneId, DEF_DELAY_IN_MINUTES);
 		
 		LocalDateTime plannedTimeBefore = milestone.getPlannedTime();
 		
@@ -201,7 +191,7 @@ public class TransportPlanIT {
 		LocalDateTime plannedTimeAfter = milestone.getPlannedTime();
 		
 		assertThat(plannedTimeBefore).isNotEqualTo(plannedTimeAfter);
-		assertThat(plannedTimeAfter).isEqualTo(plannedTimeBefore.plusMinutes(delayInMinutes));
+		assertThat(plannedTimeAfter).isEqualTo(plannedTimeBefore.plusMinutes(DEF_DELAY_IN_MINUTES));
 	}
 	
 	@Test
@@ -210,11 +200,8 @@ public class TransportPlanIT {
 		long transportPlanId = transportPlan.getId();
 		Milestone milestone = milestoneRepository.findAll().get(0);
 		long milestoneId = milestone.getId();
-		int delayInMinutes = 120;
 		
-		DelayDto delayDto = new DelayDto();
-		delayDto.setMilestoneId(milestoneId);
-		delayDto.setDelayInMinutes(delayInMinutes);
+		DelayDto delayDto = createDelayDto(milestoneId, DEF_DELAY_IN_MINUTES);
 		
 		registerDelayWithRestrictedUser(transportPlanId, delayDto, userJwt);
 	}
@@ -228,9 +215,7 @@ public class TransportPlanIT {
 		Milestone testMilestone = createAndSaveMilestone(testAddress, LocalDateTime.of(LocalDate.of(2022, 5, 03), LocalTime.of(10, 10)));
 		long testMilestoneId = testMilestone.getId();
 		
-		DelayDto delayDto = new DelayDto();
-		delayDto.setMilestoneId(testMilestoneId);
-		delayDto.setDelayInMinutes(120);
+		DelayDto delayDto = createDelayDto(testMilestoneId, DEF_DELAY_IN_MINUTES);
 		
 		registerDelayWithMilestoneNotInAnySection(transportPlanId, delayDto, transportuserJwt);
 	}
@@ -247,9 +232,7 @@ public class TransportPlanIT {
 	void testThatDelayIsNotRegistered_DueToMilestoneNotFound() throws Exception {
 		TransportPlan transportPlan = transportPlanRepository.findAll().get(0);
 		long transportPlanId = transportPlan.getId();
-		DelayDto delayDto = new DelayDto();
-		delayDto.setMilestoneId(9999L);
-		delayDto.setDelayInMinutes(120);
+		DelayDto delayDto = createDelayDto(9999L, DEF_DELAY_IN_MINUTES);
 		
 		registerDelayWithNonExistentTransportPlanIdOrMilestone(transportPlanId, delayDto, transportuserJwt);
 	}
@@ -318,6 +301,13 @@ public class TransportPlanIT {
 		loginDto.setUsername(username);
 		loginDto.setPassword(password);
 		return loginDto;
+	}
+	
+	private DelayDto createDelayDto(long milestoneId, int delayInMinutes) {
+		DelayDto delayDto = new DelayDto();
+		delayDto.setMilestoneId(milestoneId);
+		delayDto.setDelayInMinutes(delayInMinutes);
+		return delayDto;
 	}
 	
 	private String login(LoginDto loginDto) {

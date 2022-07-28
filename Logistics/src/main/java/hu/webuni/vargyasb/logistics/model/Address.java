@@ -9,7 +9,7 @@ public class Address {
 
 	@Id
 	@GeneratedValue
-	Long id;
+	private Long id;
 	
 	private String countryCode;
 	private String zipCode;

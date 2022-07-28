@@ -59,9 +59,7 @@ public class InitDbService {
 		Milestone mKaposvar = createAndSaveMilestone(aKaposvar, LocalDateTime.of(LocalDate.of(2023, 8, 05), LocalTime.of(10, 10)));
 		
 		Section sBerlinToBecs = createandSaveSection(mBerlin, mBecs);
-//		Section sBecsToBudapest = createandSaveSection(mBecs, mBudapest);
 		Section sBudapestToNagyatad = createandSaveSection(mBudapest, mNagyatad);
-//		Section sNagyatadToBerzence = createandSaveSection(mNagyatad, mBerzence);
 		Section sBerzenceToPecs = createandSaveSection(mBerzence, mPecs);
 		
 		TransportPlan pTrip = new TransportPlan();
@@ -69,9 +67,7 @@ public class InitDbService {
 		pTrip = transportPlanRepository.save(pTrip);
 		long pTripId = pTrip.getId();
 		transportPlanService.addSectionToTransportPlan(pTripId, sBerlinToBecs);
-//		transportPlanService.addSectionToTransportPlan(pTripId, sBecsToBudapest);
 		transportPlanService.addSectionToTransportPlan(pTripId, sBudapestToNagyatad);
-//		transportPlanService.addSectionToTransportPlan(pTripId, sNagyatadToBerzence);
 		transportPlanService.addSectionToTransportPlan(pTripId, sBerzenceToPecs);
 		
 	}
